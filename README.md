@@ -55,5 +55,5 @@ cache.Add(subObj1)
 reference, __ := cache.References(subObj1)
 fmt.Printf("reference=%v", reference)
 
-# reference = []interface{obj1}
+// reference = []interface{obj1}
 ```

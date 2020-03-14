@@ -3,6 +3,8 @@ package relation
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"math/rand"
+	"strconv"
 	"testing"
 )
 
@@ -118,6 +120,32 @@ var _ = Describe("Unit test", func() {
 		keys, err := c.ReferKeys(obj1.ID)
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(keys).Should(Equal([]string{subObj1.ID}))
+	})
+
+	It("Random add and delete", func() {
+		m := make(map[string]bool)
+		c.Delete(obj1)
+		for i := 1; i < 100; i++ {
+			i := rand.Int()
+			id := strconv.Itoa(i)
+			m[id] = true
+			obj := &Object{
+				ID:         id,
+				SubObjects: []*Object{subObj1},
+			}
+			c.Add(obj)
+		}
+		referenced, _ := c.ReferencedKeys(subObj1.ID)
+		Expect(len(referenced)).Should(Equal(len(m)))
+		for id := range m {
+			obj := &Object{
+				ID:         id,
+				SubObjects: nil,
+			}
+			c.Delete(obj)
+		}
+		referenced, _ = c.ReferencedKeys(subObj1.ID)
+		Expect(len(referenced)).Should(Equal(0))
 	})
 })
 
