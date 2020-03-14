@@ -1,5 +1,7 @@
 # go-cache
 
+[![Build Status](https://travis-ci.org/firemiles/go-cache.svg?branch=master)](https://travis-ci.org/firemiles/go-cache)
+
 ## Install
 
 ```sh
