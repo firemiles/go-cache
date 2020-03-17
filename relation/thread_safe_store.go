@@ -28,6 +28,19 @@ import (
 	mapset "github.com/deckarep/golang-set"
 )
 
+type RelationStore interface {
+	Add(key string, obj interface{}) error
+	Update(key string, obj interface{}) error
+	Delete(key string) error
+	List() []interface{}
+	ListKeys() []string
+	Get(key string) (item interface{}, exists bool)
+	Replace(items map[string]interface{}) error
+	Referenced(key string) ([]interface{}, error)
+	ReferencedKeys(key string) ([]string, error)
+	ReferKeys(key string) ([]string, error)
+}
+
 type relation struct {
 	referenced mapset.Set
 	refers     mapset.Set
@@ -42,7 +55,8 @@ type threadSafeMap struct {
 	referFunc ReferFunc
 }
 
-func NewThreadSafeMap(referFunc ReferFunc) *threadSafeMap {
+// NewThreadSafeMap ...
+func NewThreadSafeMap(referFunc ReferFunc) RelationStore {
 	t := new(threadSafeMap)
 	t.items = make(map[string]interface{})
 	t.relations = make(map[string]*relation)
@@ -70,6 +84,7 @@ func (t *threadSafeMap) Delete(key string) error {
 
 	if obj, exists := t.items[key]; exists {
 		t.deleteFromRelation(obj, key)
+		delete(t.items, key)
 	}
 	return nil
 }
@@ -121,6 +136,9 @@ func (t *threadSafeMap) Referenced(key string) ([]interface{}, error) {
 	if !exists {
 		return nil, fmt.Errorf("relation of key %s not found", key)
 	}
+	if relation.referenced == nil {
+		return nil, nil
+	}
 	var list []interface{}
 	for i := range relation.referenced.Iter() {
 		key := i.(string)
@@ -140,6 +158,9 @@ func (t *threadSafeMap) ReferencedKeys(key string) ([]string, error) {
 	relation, exists := t.relations[key]
 	if !exists {
 		return nil, fmt.Errorf("relation of key %s not found", key)
+	}
+	if relation.referenced == nil {
+		return nil, nil
 	}
 	var list []string
 	for i := range relation.referenced.Iter() {

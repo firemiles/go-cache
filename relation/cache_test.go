@@ -127,6 +127,9 @@ var _ = Describe("Unit test", func() {
 		references, err := c.Referenced(subObj1)
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(references).Should(Equal([]interface{}{obj1}))
+		references, err = c.Referenced(obj1)
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(references).Should(BeEmpty())
 	})
 
 	It("Multiple reference", func() {
@@ -164,6 +167,8 @@ var _ = Describe("Unit test", func() {
 				SubObjects: nil,
 			}
 			c.Delete(obj)
+			_, exists, _ := c.Get(obj)
+			Expect(exists).Should(BeFalse())
 		}
 		referenced, _ = c.ReferencedKeys(subObj1.ID)
 		Expect(len(referenced)).Should(Equal(0))

@@ -38,12 +38,13 @@ type Cache interface {
 }
 
 type cache struct {
-	cacheStorage *threadSafeMap
+	cacheStorage RelationStore
 	keyFunc      types.KeyFunc
 }
 
 var _ Cache = &cache{}
 
+// NewCache ...
 func NewCache(keyFunc types.KeyFunc, referFunc ReferFunc) Cache {
 	c := new(cache)
 	c.cacheStorage = NewThreadSafeMap(referFunc)
@@ -123,3 +124,5 @@ func (c *cache) ReferencedKeys(key string) ([]string, error) {
 func (c *cache) ReferKeys(key string) ([]string, error) {
 	return c.cacheStorage.ReferKeys(key)
 }
+
+

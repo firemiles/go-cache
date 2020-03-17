@@ -20,3 +20,79 @@
  */
 
 package relation
+
+import (
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	"strconv"
+	"sync"
+)
+
+var _ = Describe("Cache add and delete performance test", func() {
+	var c Cache
+	BeforeEach(func() {
+		c = NewCache(ObjectKey, ObjectRefers)
+	})
+
+	Measure("Add 100000 object one goroutine", func(b Benchmarker) {
+		runtime := b.Time("runtime", func() {
+			for i:=0; i<100000; i++ {
+				c.Add(&Object{ID:strconv.Itoa(i)})
+			}
+		})
+		Expect(runtime.Seconds()).Should(BeNumerically("<", 0.3), "add 100000 object should't take too long")
+	}, 10)
+	Measure("Add 100000 object with dependence one goroutine", func(b Benchmarker) {
+		runtime := b.Time("runtime", func() {
+			for i:=0; i<100000; i++ {
+				c.Add(&Object{ID:strconv.Itoa(i), SubObjects:[]*Object{&Object{ID: "a"}}})
+			}
+		})
+		Expect(runtime.Seconds()).Should(BeNumerically("<", 0.6), "add 100000 object should't take too long")
+	}, 10)
+
+
+	Measure("Delete 100000 object one goroutine", func(b Benchmarker){
+		for i:=0; i<100000; i++ {
+			c.Add(&Object{ID:strconv.Itoa(i)})
+		}
+		runtime := b.Time("runtime", func() {
+			for i:=0; i<100000; i++ {
+				c.Delete(&Object{ID:strconv.Itoa(i)})
+			}
+		})
+		Expect(runtime.Seconds()).Should(BeNumerically("<", 0.2),
+			"delete 100000 object should't take too long")
+	}, 10)
+
+	Measure("Delete 100000 object with dependence one goroutine", func(b Benchmarker){
+		for i:=0; i<100000; i++ {
+			c.Add(&Object{ID:strconv.Itoa(i), SubObjects:[]*Object{&Object{ID: "a"}}})
+		}
+		runtime := b.Time("runtime", func() {
+			for i:=0; i<100000; i++ {
+				c.Delete(&Object{ID:strconv.Itoa(i)})
+			}
+		})
+		Expect(runtime.Seconds()).Should(BeNumerically("<", 0.4),
+			"delete 100000 object should't take too long")
+	}, 10)
+
+	Measure("Add 100000 object 4 goroutines", func(b Benchmarker) {
+		runtime := b.Time("runtime", func() {
+			var wait sync.WaitGroup
+			for i := 0; i < 4; i++ {
+				wait.Add(1)
+				go func(i int) {
+					start, end := i*25000, (i+1)*25000
+					for j := start; j < end; j++ {
+						c.Add(&Object{ID: strconv.Itoa(j)})
+					}
+					wait.Done()
+				}(i)
+			}
+			wait.Wait()
+		})
+		Expect(runtime.Seconds()).Should(BeNumerically("<", 0.3), "add 100000 object 4 goroutines  should't take too long")
+	}, 10)
+})
