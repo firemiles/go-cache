@@ -192,7 +192,7 @@ func (t *threadSafeMap) ReferKeys(key string) ([]string, error) {
 
 func (t *threadSafeMap) updateRelation(oldObj interface{}, newObj interface{}, key string) {
 	if oldObj != nil {
-		t.deleteFromRelation(oldObj, key)
+		t.deleteRefersFromRelation(oldObj, key)
 	}
 	refers, err := t.referFunc(newObj)
 	if err != nil {
@@ -225,6 +225,11 @@ func (t *threadSafeMap) updateRelation(oldObj interface{}, newObj interface{}, k
 }
 
 func (t *threadSafeMap) deleteFromRelation(obj interface{}, key string) {
+	t.deleteRefersFromRelation(obj, key)
+	delete(t.relations, key)
+}
+
+func (t *threadSafeMap) deleteRefersFromRelation(obj interface{}, key string) {
 	refers, err := t.referFunc(obj)
 	if err != nil {
 		panic(fmt.Errorf("unable to calculate refers for key %q: %v", key, err))
@@ -239,5 +244,5 @@ func (t *threadSafeMap) deleteFromRelation(obj interface{}, key string) {
 		}
 		relat.referenced.Remove(key)
 	}
-	delete(t.relations, key)
 }
+

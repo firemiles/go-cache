@@ -123,6 +123,14 @@ var _ = Describe("Unit test", func() {
 		Expect(len(listKeys)).Should(Equal(0))
 	})
 
+	It("Update sub object", func() {
+		subObj := *subObj1
+		Expect(c.Add(&subObj)).ShouldNot(HaveOccurred())
+		references, err := c.ReferencedKeys(subObj.ID)
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(references).Should(Equal([]string{obj1.ID}))
+	})
+
 	It("Get reference", func() {
 		references, err := c.Referenced(subObj1)
 		Expect(err).ShouldNot(HaveOccurred())
